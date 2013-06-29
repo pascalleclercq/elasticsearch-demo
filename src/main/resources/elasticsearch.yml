@@ -1,0 +1,2 @@
+#cluster.name: demo
+path.data: target/data
