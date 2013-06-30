@@ -1,13 +1,10 @@
 package fr.opensagres.demo.es.commandeclient;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -58,8 +55,7 @@ public class BulkUpdateAndSearchTest
     }
 
 
-    
-    private static Client createNewClient()
+    public static Client createNewClient()
     {
        //remote client : requires elasticsearch to run in the background... 
        // Client client = new TransportClient().addTransportAddress( new InetSocketTransportAddress( "localhost", 9300 ) );
@@ -95,11 +91,12 @@ public class BulkUpdateAndSearchTest
         client.close();
     }
 
+   
     @Test
     public void queryString()
         throws Exception
     {
-        Client client = createNewClient();
+        Client client= createNewClient();
         long start = System.currentTimeMillis();
         SearchRequestBuilder searchRequest =
             client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
@@ -152,7 +149,7 @@ public class BulkUpdateAndSearchTest
 
 
     public List<CommandeClient> searchAndDeserialize( Client client, SearchRequestBuilder searchRequest )
-        throws IOException, JsonParseException, JsonMappingException
+        throws Exception
     {
         SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
         SearchHit[] hites = hits.getHits();
