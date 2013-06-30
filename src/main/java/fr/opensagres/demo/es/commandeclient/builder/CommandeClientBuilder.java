@@ -10,9 +10,9 @@ package fr.opensagres.demo.es.commandeclient.builder;
 import fr.opensagres.demo.es.commandeclient.Client;
 import fr.opensagres.demo.es.commandeclient.CommandeClient;
 import fr.opensagres.demo.es.commandeclient.LigneCommande;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class CommandeClientBuilder
@@ -111,6 +111,22 @@ class CommandeClientBuilderBase<GeneratorT extends CommandeClientBuilderBase<Gen
         return new AddedLignesCommandeElementLigneCommandeBuilder( obj );
     }
 
+    @SuppressWarnings( "unchecked" )
+    public GeneratorT withDateCreation( Date aValue )
+    {
+        instance.setDateCreation( aValue );
+
+        return (GeneratorT) this;
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public GeneratorT withDateModification( Date aValue )
+    {
+        instance.setDateModification( aValue );
+
+        return (GeneratorT) this;
+    }
+
     public class ClientClientBuilder
         extends ClientBuilderBase<ClientClientBuilder>
     {
@@ -138,6 +154,45 @@ class CommandeClientBuilderBase<GeneratorT extends CommandeClientBuilderBase<Gen
         public GeneratorT endLignesCommandeElement()
         {
             return (GeneratorT) CommandeClientBuilderBase.this;
+        }
+    }
+
+    public static class ClientBuilderBase<GeneratorT extends ClientBuilderBase<GeneratorT>>
+    {
+        private Client instance;
+
+        protected ClientBuilderBase( Client aInstance )
+        {
+            instance = aInstance;
+        }
+
+        protected Client getInstance()
+        {
+            return instance;
+        }
+
+        @SuppressWarnings( "unchecked" )
+        public GeneratorT withNumeroClient( String aValue )
+        {
+            instance.setNumeroClient( aValue );
+
+            return (GeneratorT) this;
+        }
+
+        @SuppressWarnings( "unchecked" )
+        public GeneratorT withPrenom( String aValue )
+        {
+            instance.setPrenom( aValue );
+
+            return (GeneratorT) this;
+        }
+
+        @SuppressWarnings( "unchecked" )
+        public GeneratorT withNom( String aValue )
+        {
+            instance.setNom( aValue );
+
+            return (GeneratorT) this;
         }
     }
 
@@ -225,45 +280,6 @@ class CommandeClientBuilderBase<GeneratorT extends CommandeClientBuilderBase<Gen
             {
                 return (GeneratorT) LigneCommandeBuilderBase.this;
             }
-        }
-    }
-
-    public static class ClientBuilderBase<GeneratorT extends ClientBuilderBase<GeneratorT>>
-    {
-        private Client instance;
-
-        protected ClientBuilderBase( Client aInstance )
-        {
-            instance = aInstance;
-        }
-
-        protected Client getInstance()
-        {
-            return instance;
-        }
-
-        @SuppressWarnings( "unchecked" )
-        public GeneratorT withNumeroClient( String aValue )
-        {
-            instance.setNumeroClient( aValue );
-
-            return (GeneratorT) this;
-        }
-
-        @SuppressWarnings( "unchecked" )
-        public GeneratorT withPrenom( String aValue )
-        {
-            instance.setPrenom( aValue );
-
-            return (GeneratorT) this;
-        }
-
-        @SuppressWarnings( "unchecked" )
-        public GeneratorT withNom( String aValue )
-        {
-            instance.setNom( aValue );
-
-            return (GeneratorT) this;
         }
     }
 }

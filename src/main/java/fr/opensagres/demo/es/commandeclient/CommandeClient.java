@@ -1,6 +1,7 @@
 package fr.opensagres.demo.es.commandeclient;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -11,6 +12,9 @@ public class CommandeClient {
     private String type;
     private Client client;
     private List<LigneCommande> lignesCommande = new ArrayList<LigneCommande>();
+    private Date dateCreation;
+    private Date dateModification;
+    
     public boolean addLigneCommande ( LigneCommande ligneCommande )
     {
         return lignesCommande.add( ligneCommande );
@@ -54,6 +58,20 @@ public class CommandeClient {
         this.lignesCommande = lignesCommande;
     }
     
-    
-    
+    public void setDateCreation( Date dateCreation )
+    {
+        this.dateCreation = dateCreation;
+    }
+    public Date getDateCreation()
+    {
+        return dateCreation;
+    }
+    public void setDateModification( Date dateModification )
+    {
+        this.dateModification = dateModification;
+    }
+    public Date getDateModification()
+    {
+        return dateModification;
+    }
 }
