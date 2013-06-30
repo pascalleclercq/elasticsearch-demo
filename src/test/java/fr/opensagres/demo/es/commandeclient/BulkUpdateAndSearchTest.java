@@ -24,6 +24,7 @@ import fr.opensagres.demo.es.commandeclient.builder.CommandeClientBuilder;
 
 public class BulkUpdateAndSearchTest
 {
+    private static final int NB_MAX_TO_FETCH = 500;
     private static final String DEMOINDEX = "demoindex";
     private static final int NB_ITEMS = 10000;
 
@@ -174,7 +175,7 @@ public class BulkUpdateAndSearchTest
         long start = System.currentTimeMillis();
         
         SearchRequestBuilder searchRequest =
-            client.prepareSearch( DEMOINDEX ).setSize( 500 ).setQuery( QueryBuilders.rangeQuery( "dateCreation" ).from( from.getTime() ).to(to.getTime()) );
+            client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH ).setQuery( QueryBuilders.rangeQuery( "dateCreation" ).from( from.getTime() ).to(to.getTime()) );
 
         SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
         System.out.println( hits.getTotalHits() );
