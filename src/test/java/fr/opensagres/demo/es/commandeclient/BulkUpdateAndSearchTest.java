@@ -63,18 +63,7 @@ public class BulkUpdateAndSearchTest
         Client client = node.client();
         return client;
     }
-//    @Ignore( "invoke when necessary..." )
-//    @Test
-//    public void jsonSerialization()
-//        throws Exception
-//    {
-//        ObjectMapper mapper = new ObjectMapper();
-//        String json = mapper.writeValueAsString( createCommandeClient( 1 ) );
-//        String expected =
-//            "{\"type\":\"COMMANDE\",\"numeroCommande\":\"1231\",\"client\":{\"numeroClient\":\"12345\",\"prenom\":\"prenom\",\"nom\":\"Nom\"},\"lignesCommande\":[{\"numeroLigne\":1,\"commande\":null,\"codeArticle\":\"123451\",\"libelleArticle\":\"Test Artcile 1\",\"quantite\":1.0,\"prixUnitaire\":11.5},{\"numeroLigne\":1,\"commande\":null,\"codeArticle\":\"888881\",\"libelleArticle\":\"Other Artcile 1\",\"quantite\":7.0,\"prixUnitaire\":6.5}]}";
-//        Assert.assertEquals( expected, json );
-//    }
-    
+
     @BeforeClass
     public static  void performBulkIndex()
         throws Exception
@@ -86,7 +75,7 @@ public class BulkUpdateAndSearchTest
 
         for ( int i = 0; i < NB_ITEMS; i++ )
         {
-        CommandeClient commandeClient =    createCommandeClient( i );
+            CommandeClient commandeClient = createCommandeClient( i );
             String json = mapper.writeValueAsString( commandeClient  );
             // either use client#prepare, or use Requests# to directly build index/delete requests
             bulkRequest.add( client.prepareIndex( DEMOINDEX, "customerOrder", commandeClient.getNumeroCommande() ).setSource( json ) );
@@ -105,7 +94,7 @@ public class BulkUpdateAndSearchTest
    
 
     @Test
-    public void simpleSearch()
+    public void queryString()
         throws Exception
     {
 
@@ -161,19 +150,16 @@ public class BulkUpdateAndSearchTest
         Assert.assertEquals( 1, result.size() );
     }
     @Test
-    public void searchDateRange()
+    public void rangeQuery()
         throws Exception
     {
-        
-        Date from = DateTime.now().minusDays( 10 ).toDate();
-        Date to = DateTime.now().plusDays( 10 ).toDate();
-        
-        
         ObjectMapper mapper = new ObjectMapper();
         List<CommandeClient> result = new ArrayList<CommandeClient>();
         Client client = createNewClient();
         long start = System.currentTimeMillis();
-        
+        //search
+        Date from = DateTime.now().minusDays( 10 ).toDate();
+        Date to = DateTime.now().plusDays( 10 ).toDate();
         SearchRequestBuilder searchRequest =
             client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH ).setQuery( QueryBuilders.rangeQuery( "dateCreation" ).from( from.getTime() ).to(to.getTime()) );
 
