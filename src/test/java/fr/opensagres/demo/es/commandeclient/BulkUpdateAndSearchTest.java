@@ -1,10 +1,13 @@
 package fr.opensagres.demo.es.commandeclient;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -27,6 +30,7 @@ public class BulkUpdateAndSearchTest
     private static final int NB_MAX_TO_FETCH = 500;
     private static final String DEMOINDEX = "demoindex";
     private static final int NB_ITEMS = 10000;
+    ObjectMapper mapper = new ObjectMapper();
 
     private static CommandeClient createCommandeClient( int sufix )
     {
@@ -91,91 +95,74 @@ public class BulkUpdateAndSearchTest
         client.close();
     }
 
-   
-
     @Test
     public void queryString()
         throws Exception
     {
-
-        ObjectMapper mapper = new ObjectMapper();
-        List<CommandeClient> result = new ArrayList<CommandeClient>();
         Client client = createNewClient();
         long start = System.currentTimeMillis();
         SearchRequestBuilder searchRequest =
-            client.prepareSearch( DEMOINDEX ).setSize( 500 ).setQuery( QueryBuilders.queryString( "*12345123*" ) );
-
-        SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
-        System.out.println( hits.getTotalHits() );
-        SearchHit[] hites = hits.getHits();
-        
-        for ( int i = 0; i < hites.length; i++ )
-        {
-            CommandeClient readValue = mapper.readValue( hites[i].getSourceAsString(), CommandeClient.class );
-            System.out.println( readValue.getNumeroCommande() );
-            result.add( readValue );
-        }
+            client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
+            .setQuery( QueryBuilders.queryString( "*12345123*" ) );
+        List<CommandeClient> result = searchAndDeserialize( client, searchRequest );
         System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
+        Assert.assertEquals( 11, result.size() );
         // on shutdown
         client.close();
-        Assert.assertEquals( 11, result.size() );
     }
     
-
-
     @Test
     public void searchById()
         throws Exception
     {
-
-        ObjectMapper mapper = new ObjectMapper();
-        List<CommandeClient> result = new ArrayList<CommandeClient>();
         Client client = createNewClient();
         long start = System.currentTimeMillis();
         SearchRequestBuilder searchRequest =
-            client.prepareSearch( DEMOINDEX ).setSize( 500 ).setQuery( QueryBuilders.idsQuery().ids("12310") );
-        SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
-        System.out.println( hits.getTotalHits() );
-        SearchHit[] hites = hits.getHits();
+            client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
+            .setQuery( QueryBuilders.idsQuery().ids("12310") );
         
-        for ( int i = 0; i < hites.length; i++ )
-        {
-            CommandeClient readValue = mapper.readValue( hites[i].getSourceAsString(), CommandeClient.class );
-            System.out.println( readValue.getNumeroCommande() );
-            result.add( readValue );
-        }
+        List<CommandeClient> result = searchAndDeserialize( client, searchRequest );
         System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
+        Assert.assertEquals( 1, result.size() );
         // on shutdown
         client.close();
-        Assert.assertEquals( 1, result.size() );
+        
     }
+    
     @Test
     public void rangeQuery()
         throws Exception
     {
-        ObjectMapper mapper = new ObjectMapper();
-        List<CommandeClient> result = new ArrayList<CommandeClient>();
         Client client = createNewClient();
         long start = System.currentTimeMillis();
         //search
         Date from = DateTime.now().minusDays( 10 ).toDate();
         Date to = DateTime.now().plusDays( 10 ).toDate();
         SearchRequestBuilder searchRequest =
-            client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH ).setQuery( QueryBuilders.rangeQuery( "dateCreation" ).from( from.getTime() ).to(to.getTime()) );
-
-        SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
-        System.out.println( hits.getTotalHits() );
-        SearchHit[] hites = hits.getHits();
+            client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
+            .setQuery( QueryBuilders.rangeQuery( "dateCreation" ).from( from.getTime() ).to(to.getTime()) );
+        List<CommandeClient> result = searchAndDeserialize( client, searchRequest );
+        System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
+        Assert.assertEquals( 240, result.size() );
+        // on shutdown
+        client.close();
         
+    }
+
+
+
+    public List<CommandeClient> searchAndDeserialize( Client client, SearchRequestBuilder searchRequest )
+        throws IOException, JsonParseException, JsonMappingException
+    {
+        SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
+        SearchHit[] hites = hits.getHits();
+        List<CommandeClient> result = new ArrayList<CommandeClient>(hites.length);
         for ( int i = 0; i < hites.length; i++ )
         {
             CommandeClient readValue = mapper.readValue( hites[i].getSourceAsString(), CommandeClient.class );
             System.out.println( readValue.getNumeroCommande() );
             result.add( readValue );
         }
-        System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
-        // on shutdown
-        client.close();
-        Assert.assertEquals( 240, result.size() );
+        return result;
     }
 }
