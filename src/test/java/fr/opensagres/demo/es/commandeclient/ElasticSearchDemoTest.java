@@ -10,7 +10,9 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
@@ -22,7 +24,7 @@ import org.junit.Test;
 
 import fr.opensagres.demo.es.commandeclient.builder.CommandeClientBuilder;
 
-public class BulkUpdateAndSearchTest
+public class ElasticSearchDemoTest
 {
     private static final int NB_MAX_TO_FETCH = 500;
     private static final String DEMOINDEX = "demoindex";
@@ -55,12 +57,18 @@ public class BulkUpdateAndSearchTest
     }
 
 
-    public static Client createNewClient()
+    public static Client createNewClient(boolean local)
     {
+        Client client = null;
        //remote client : requires elasticsearch to run in the background... 
        // Client client = new TransportClient().addTransportAddress( new InetSocketTransportAddress( "localhost", 9300 ) );
-        Node  node = NodeBuilder.nodeBuilder().node();
-        Client client = node.client();
+        if(local) {
+            Node  node = NodeBuilder.nodeBuilder().node();
+            client = node.client();    
+        } else {
+            client = new TransportClient().addTransportAddress( new InetSocketTransportAddress( "localhost", 9300 ) );
+        }
+        
         return client;
     }
 
@@ -69,7 +77,7 @@ public class BulkUpdateAndSearchTest
         throws Exception
     {
         ObjectMapper mapper = new ObjectMapper();
-        Client client = createNewClient();
+        Client client = createNewClient(true);
         long start = System.currentTimeMillis();
         BulkRequestBuilder bulkRequest = client.prepareBulk();
 
@@ -96,13 +104,13 @@ public class BulkUpdateAndSearchTest
     public void queryString()
         throws Exception
     {
-        Client client= createNewClient();
+        Client client= createNewClient(true);
         long start = System.currentTimeMillis();
         SearchRequestBuilder searchRequest =
             client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
             .setQuery( QueryBuilders.queryString( "*12345123*" ) );
         List<CommandeClient> result = searchAndDeserialize( client, searchRequest );
-        System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
+        System.out.println("Time spent to search by queryString and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
         Assert.assertEquals( 11, result.size() );
         // on shutdown
         client.close();
@@ -112,14 +120,14 @@ public class BulkUpdateAndSearchTest
     public void searchById()
         throws Exception
     {
-        Client client = createNewClient();
+        Client client = createNewClient(true);
         long start = System.currentTimeMillis();
         SearchRequestBuilder searchRequest =
             client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
             .setQuery( QueryBuilders.idsQuery().ids("12310") );
         
         List<CommandeClient> result = searchAndDeserialize( client, searchRequest );
-        System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
+        System.out.println("Time spent to search by id and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
         Assert.assertEquals( 1, result.size() );
         // on shutdown
         client.close();
@@ -130,7 +138,7 @@ public class BulkUpdateAndSearchTest
     public void rangeQuery()
         throws Exception
     {
-        Client client = createNewClient();
+        Client client = createNewClient(true);
         long start = System.currentTimeMillis();
         //search
         Date from = DateTime.now().minusDays( 10 ).toDate();
@@ -139,7 +147,7 @@ public class BulkUpdateAndSearchTest
             client.prepareSearch( DEMOINDEX ).setSize( NB_MAX_TO_FETCH )
             .setQuery( QueryBuilders.rangeQuery( "dateCreation" ).from( from.getTime() ).to(to.getTime()) );
         List<CommandeClient> result = searchAndDeserialize( client, searchRequest );
-        System.out.println("Time spent to search and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
+        System.out.println("Time spent to search by rangeQuery and deserialize "+result.size()+" items "+(System.currentTimeMillis()-start)+" ms");
         Assert.assertEquals( 240, result.size() );
         // on shutdown
         client.close();
@@ -148,7 +156,7 @@ public class BulkUpdateAndSearchTest
 
 
 
-    public List<CommandeClient> searchAndDeserialize( Client client, SearchRequestBuilder searchRequest )
+    private List<CommandeClient> searchAndDeserialize( Client client, SearchRequestBuilder searchRequest )
         throws Exception
     {
         SearchHits hits = client.search( searchRequest.request() ).actionGet().getHits();
@@ -157,7 +165,7 @@ public class BulkUpdateAndSearchTest
         for ( int i = 0; i < hites.length; i++ )
         {
             CommandeClient readValue = mapper.readValue( hites[i].getSourceAsString(), CommandeClient.class );
-            System.out.println( readValue.getNumeroCommande() );
+            //System.out.println( readValue.getNumeroCommande() );
             result.add( readValue );
         }
         return result;
